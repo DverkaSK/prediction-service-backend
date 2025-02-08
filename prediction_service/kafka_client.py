@@ -2,17 +2,19 @@ from confluent_kafka import Consumer, Producer
 import json
 from config import KAFKA_CONFIG, KAFKA_TOPICS
 
+
+def delivery_report(err, msg):
+    if err is not None:
+        print(f'Message delivery failed: {err}')
+    else:
+        print(f'Message delivered to {msg.topic()}')
+
+
 class KafkaClient:
     def __init__(self):
         self.consumer = Consumer(KAFKA_CONFIG['consumer'])
         self.producer = Producer(KAFKA_CONFIG['producer'])
         self.consumer.subscribe([KAFKA_TOPICS['requests']])
-
-    def delivery_report(self, err, msg):
-        if err is not None:
-            print(f'Message delivery failed: {err}')
-        else:
-            print(f'Message delivered to {msg.topic()}')
 
     def send_response(self, request_id, data):
         response = {'request_id': request_id}
@@ -22,7 +24,7 @@ class KafkaClient:
             KAFKA_TOPICS['results'],
             key=request_id.encode('utf-8') if request_id else None,
             value=json.dumps(response).encode('utf-8'),
-            callback=self.delivery_report
+            callback=delivery_report
         )
         self.producer.flush()
 
