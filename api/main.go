@@ -22,15 +22,17 @@ func getEnvOrDefault(key, defaultValue string) string {
 }
 
 const (
+	kafkaBroker       = "KAFKA_BROKER"
 	kafkaTopic        = "prediction-requests"
 	kafkaResultsTopic = "prediction-results"
+	predictionService = "prediction-service"
 )
 
 func main() {
-	kafkaBroker := getEnvOrDefault("KAFKA_BROKER", "localhost:9092")
+	kafkaBroker := getEnvOrDefault(kafkaBroker, "localhost:9092")
 
 	producer := kafka.NewProducer(kafkaBroker, kafkaTopic)
-	consumer := kafka.NewConsumer(kafkaBroker, kafkaResultsTopic, "prediction-service")
+	consumer := kafka.NewConsumer(kafkaBroker, kafkaResultsTopic, predictionService)
 
 	defer func() {
 		if err := producer.Close(); err != nil {
