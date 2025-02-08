@@ -1,4 +1,5 @@
 version: '3'
+
 services:
   zookeeper:
     image: wurstmeister/zookeeper
@@ -15,3 +16,23 @@ services:
       KAFKA_CREATE_TOPICS: "prediction-requests:1:1,prediction-results:1:1"
     depends_on:
       - zookeeper
+
+  backend:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
+
+  prediction-service:
+    build:
+      context: ./prediction_service
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
