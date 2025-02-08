@@ -23,8 +23,8 @@ func NewConsumer(broker, topic, groupID string) *Consumer {
 	return &Consumer{reader: reader}
 }
 
-func (c *Consumer) ReadMessage(ctx context.Context) (kafka.Message, error) {
-	return c.reader.ReadMessage(ctx)
+func (c *Consumer) ReadMessage(context context.Context) (kafka.Message, error) {
+	return c.reader.ReadMessage(context)
 }
 
 func (c *Consumer) Close() error {

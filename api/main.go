@@ -14,15 +14,25 @@ import (
 	"time"
 )
 
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
 const (
-	kafkaBroker       = "localhost:9092"
+	kafkaBroker       = "KAFKA_BROKER"
 	kafkaTopic        = "prediction-requests"
 	kafkaResultsTopic = "prediction-results"
+	predictionService = "prediction-service"
 )
 
 func main() {
+	kafkaBroker := getEnvOrDefault(kafkaBroker, "localhost:9092")
+
 	producer := kafka.NewProducer(kafkaBroker, kafkaTopic)
-	consumer := kafka.NewConsumer(kafkaBroker, kafkaResultsTopic, "prediction-service")
+	consumer := kafka.NewConsumer(kafkaBroker, kafkaResultsTopic, predictionService)
 
 	defer func() {
 		if err := producer.Close(); err != nil {

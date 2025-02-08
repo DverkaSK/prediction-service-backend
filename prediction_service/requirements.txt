@@ -3,3 +3,4 @@ torchvision
 Pillow
 confluent-kafka
 transformers
+python-dotenv

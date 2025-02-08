@@ -19,8 +19,8 @@ services:
 
   backend:
     build:
-      context: ./api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api/Dockerfile
     ports:
       - "8080:8080"
     depends_on:
@@ -36,3 +36,4 @@ services:
       - kafka
     environment:
       - KAFKA_BROKER=kafka:9092
+      - MODEL_PATH=/app/model/vit.pt
