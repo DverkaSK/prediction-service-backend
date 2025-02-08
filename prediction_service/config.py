@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # загружаем переменные из .env
+load_dotenv()
 
 KAFKA_CONFIG = {
     'consumer': {
