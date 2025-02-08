@@ -14,13 +14,21 @@ import (
 	"time"
 )
 
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
 const (
-	kafkaBroker       = "localhost:9092"
 	kafkaTopic        = "prediction-requests"
 	kafkaResultsTopic = "prediction-results"
 )
 
 func main() {
+	kafkaBroker := getEnvOrDefault("KAFKA_BROKER", "localhost:9092")
+
 	producer := kafka.NewProducer(kafkaBroker, kafkaTopic)
 	consumer := kafka.NewConsumer(kafkaBroker, kafkaResultsTopic, "prediction-service")
 

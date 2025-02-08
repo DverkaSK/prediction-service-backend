@@ -1,11 +1,16 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # загружаем переменные из .env
+
 KAFKA_CONFIG = {
     'consumer': {
-        'bootstrap.servers': 'localhost:9092',
+        'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS'),
         'group.id': 'prediction_service',
         'auto.offset.reset': 'earliest'
     },
     'producer': {
-        'bootstrap.servers': 'localhost:9092'
+        'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS')
     }
 }
 
@@ -14,7 +19,7 @@ KAFKA_TOPICS = {
     'results': 'prediction-results'
 }
 
-MODEL_PATH = 'C:/Users/asdasd/Downloads/vit.pt'
+MODEL_PATH = os.getenv('MODEL_PATH')
 
 CLASSES = [
     'Барокко',
