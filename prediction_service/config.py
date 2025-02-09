@@ -19,6 +19,14 @@ KAFKA_TOPICS = {
     'results': 'prediction-results'
 }
 
+MINIO_CONFIG = {
+    'endpoint': os.getenv('MINIO_ENDPOINT'),
+    'access_key': os.getenv('MINIO_ACCESS_KEY'),
+    'secret_key': os.getenv('MINIO_SECRET_KEY'),
+    'secure': os.getenv('MINIO_SECURE', 'False').lower() == 'true',
+    'bucket_name': os.getenv('MINIO_BUCKET_NAME')
+}
+
 MODEL_PATH = os.getenv('MODEL_PATH')
 
 CLASSES = [

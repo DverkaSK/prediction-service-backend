@@ -1,7 +1,7 @@
 package structs
 
 type PredictionRequest struct {
-	Path      string `json:"path"`
+	ImageID   string `json:"image_id"`
 	RequestID string `json:"request_id"`
 }
 

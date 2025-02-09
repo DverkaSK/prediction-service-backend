@@ -17,6 +17,17 @@ services:
     depends_on:
       - zookeeper
 
+  minio:
+    image: minio/minio
+    container_name: prediction_minio
+    ports:
+      - "9000:9000"  # api
+      - "9001:9001"  # web
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    command: server --console-address ":9001" /data
+
   backend:
     build:
       context: .

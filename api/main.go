@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"miit-ai-backend/api/kafka"
+	"miit-ai-backend/api/minio"
 	"miit-ai-backend/api/prediction"
 	"miit-ai-backend/api/server"
 	"net/http"
@@ -26,13 +27,16 @@ const (
 	kafkaTopic        = "prediction-requests"
 	kafkaResultsTopic = "prediction-results"
 	predictionService = "prediction-service"
+	minioEndpoint     = "MINIO_ENDPOINT"
+	minioAccessKey    = "MINIO_ACCESS_KEY"
+	minioSecretKey    = "MINIO_SECRET_KEY"
+	minioBucketName   = "MINIO_BUCKET_NAME"
 )
 
 func main() {
-	kafkaBroker := getEnvOrDefault(kafkaBroker, "localhost:9092")
-
-	producer := kafka.NewProducer(kafkaBroker, kafkaTopic)
-	consumer := kafka.NewConsumer(kafkaBroker, kafkaResultsTopic, predictionService)
+	kafkaBrokerAddr := getEnvOrDefault(kafkaBroker, "localhost:9092")
+	producer := kafka.NewProducer(kafkaBrokerAddr, kafkaTopic)
+	consumer := kafka.NewConsumer(kafkaBrokerAddr, kafkaResultsTopic, predictionService)
 
 	defer func() {
 		if err := producer.Close(); err != nil {
@@ -46,8 +50,18 @@ func main() {
 		}
 	}()
 
-	predictHandler := prediction.NewPredictHandler(producer, consumer)
+	minioClient, err := minio.NewMinioClient(
+		getEnvOrDefault(minioEndpoint, "localhost:9000"),
+		getEnvOrDefault(minioAccessKey, "minio"),
+		getEnvOrDefault(minioSecretKey, "minio123"),
+		getEnvOrDefault(minioBucketName, "images"),
+	)
+	if err != nil {
+		fmt.Printf("Failed to create MinIO client: %v\n", err)
+		return
+	}
 
+	predictHandler := prediction.NewPredictHandler(producer, consumer, minioClient)
 	srv := server.NewServer(predictHandler)
 
 	go func() {

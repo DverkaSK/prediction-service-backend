@@ -21,12 +21,18 @@ def process_requests():
             request_id = 'unknown'
             try:
                 request_data = json.loads(msg.value().decode('utf-8'))
-                image_path = request_data.get('path')
+                image_id = request_data.get('image_id')
                 request_id = request_data.get('request_id', 'unknown')
 
-                print(f"Processing request {request_id}")
+                print(f"Processing request {request_id} for image {image_id}")
 
-                prediction_result, error = predictor.predict(image_path)
+                if not image_id:
+                    error_msg = "Image ID is missing in the request"
+                    print(error_msg)
+                    kafka_client.send_error(error_msg, request_id)
+                    continue
+
+                prediction_result, error = predictor.predict(image_id)
 
                 if error is None:
                     kafka_client.send_response(request_id, prediction_result)
