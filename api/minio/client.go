@@ -45,14 +45,19 @@ func NewMinioClient(endpoint, accessKey, secretKey, bucketName string) (*Client,
 func (c *Client) UploadImage(fileHeader *multipart.FileHeader) (string, error) {
 	file, err := fileHeader.Open()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+
+	var closeErr error
+	defer func() {
+		cerr := file.Close()
+		if err == nil {
+			closeErr = cerr
+		}
+	}()
 
 	imageID := uuid.New().String()
-
 	ext := filepath.Ext(fileHeader.Filename)
-
 	objectName := imageID + ext
 
 	_, err = c.client.PutObject(
@@ -64,7 +69,11 @@ func (c *Client) UploadImage(fileHeader *multipart.FileHeader) (string, error) {
 		minio.PutObjectOptions{ContentType: fileHeader.Header.Get("Content-Type")},
 	)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to put object: %w", err)
+	}
+
+	if closeErr != nil {
+		return "", fmt.Errorf("failed to close file: %w", closeErr)
 	}
 
 	return objectName, nil

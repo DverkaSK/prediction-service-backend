@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
+	"log"
 	"miit-ai-backend/api/kafka"
 	"miit-ai-backend/api/minio"
 	"miit-ai-backend/api/prediction/structs"
@@ -37,14 +38,53 @@ func (h *PredictHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, header, err := r.FormFile("image")
-	if err != nil {
-		http.Error(w, "Ошибка при получении файла: "+err.Error(), http.StatusBadRequest)
+	files := r.MultipartForm.File["image"]
+
+	if len(files) == 0 {
+		http.Error(w, "Не загружено ни одного файла", http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
+	if len(files) > 1 {
+		http.Error(w, "Разрешена загрузка только одного файла за раз", http.StatusBadRequest)
+		return
+	}
 
-	imageID, err := h.minioClient.UploadImage(header)
+	file, err := files[0].Open()
+	if err != nil {
+		http.Error(w, "Ошибка при открытии файла: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("Ошибка при закрытии файла: %v", err)
+		}
+	}()
+
+	buffer := make([]byte, 512)
+	_, err = file.Read(buffer)
+	if err != nil {
+		http.Error(w, "Ошибка при чтении файла: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		http.Error(w, "Ошибка при обработке файла: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fileType := http.DetectContentType(buffer)
+	if !isAllowedImageType(fileType) {
+		http.Error(w, "Неподдерживаемый тип файла. Разрешены только изображения (JPEG, PNG, GIF)", http.StatusBadRequest)
+		return
+	}
+
+	if files[0].Size > 20<<20 {
+		http.Error(w, "Размер файла превышает допустимый предел в 10MB", http.StatusBadRequest)
+		return
+	}
+
+	imageID, err := h.minioClient.UploadImage(files[0])
 	if err != nil {
 		http.Error(w, "Ошибка при загрузке изображения в MinIO: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -107,4 +147,14 @@ func (h *PredictHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	case <-ctx.Done():
 		http.Error(w, "Превышено время ожидания результата", http.StatusGatewayTimeout)
 	}
+}
+
+func isAllowedImageType(fileType string) bool {
+	allowedTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/jpg":  true,
+		"image/png":  true,
+		"image/gif":  true,
+	}
+	return allowedTypes[fileType]
 }
